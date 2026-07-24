@@ -73,7 +73,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#121212] text-black dark:text-white transition-colors duration-300 relative overflow-x-hidden">
+    <div className="min-h-screen flex flex-col md:flex-row bg-gray-50 dark:bg-[#121212] text-black dark:text-white transition-colors duration-300 relative overflow-x-hidden">
       
       {/* Mobile Top Navigation Header */}
       <header className="md:hidden flex items-center justify-between p-4 bg-white dark:bg-[#1e1e1e] border-b border-gray-200 dark:border-[#333] z-30 sticky top-0 w-full">
@@ -100,7 +100,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* Responsive Sidebar */}
       <aside 
-        className={`fixed top-0 left-0 z-50 h-screen border-r border-gray-200 dark:border-[#333] bg-white dark:bg-[#1e1e1e] py-6 flex flex-col transition-all duration-300 ${
+        className={`fixed md:sticky top-0 left-0 z-50 md:z-20 h-screen border-r border-gray-200 dark:border-[#333] bg-white dark:bg-[#1e1e1e] py-6 flex flex-col transition-all duration-300 shrink-0 ${
           // Desktop Sizes
           isCollapsed ? 'md:w-20 md:px-3' : 'md:w-64 md:px-6'
         } ${
@@ -114,7 +114,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Sidebar Header & Controls */}
         <div className={`flex items-center justify-between mb-8 ${isCollapsed ? 'md:justify-center' : ''}`}>
           
-          {/* User Info (Show when expanded on desktop, or always on mobile drawer) */}
+          {/* User Info */}
           <div className={`flex items-center gap-3 overflow-hidden ${isCollapsed ? 'md:hidden flex' : 'flex'}`}>
             <div className="w-10 h-10 rounded-full bg-[#3B3026] dark:bg-white text-white dark:text-[#3B3026] flex items-center justify-center font-bold text-lg overflow-hidden shrink-0 border-2 border-gray-100 dark:border-[#333]">
               {mentorPic ? (
@@ -216,12 +216,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </button>
       </aside>
 
-      {/* Main Content Area — Completely resetting margin on mobile so it stays centered and full-width */}
-      <main 
-        className={`w-full transition-all duration-300 p-4 sm:p-8 lg:p-12 overflow-x-hidden ${
-          isCollapsed ? 'md:pl-28' : 'md:pl-72'
-        }`}
-      >
+      {/* Main Content Area */}
+      <main className="flex-1 min-w-0 p-4 sm:p-8 lg:p-12 transition-all duration-300">
         {children}
       </main>
 

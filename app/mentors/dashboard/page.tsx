@@ -1,138 +1,157 @@
 'use client';
-import { useState, useRef, useEffect } from 'react';
-import Select from 'react-select';
-import { Camera, Save, Edit3, Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
 
-const yearOptions = [
-  { value: '1', label: '1st Year' },
-  { value: '2', label: '2nd Year' },
-  { value: '3', label: '3rd Year' },
-  { value: '4', label: '4th Year' },
-  { value: '5', label: '5th Year' },
-];
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { Users, FileText, Heart, ArrowUpRight, Plus, Sparkles } from 'lucide-react';
 
-export default function ProfilePage() {
+export default function OverviewPage() {
   const [mounted, setMounted] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [profilePic, setProfilePic] = useState<string | null>(null);
-  const [formData, setFormData] = useState({ name: '', email: '', about: '' });
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [mentorName, setMentorName] = useState('Mentor');
+  const [myBlogs, setMyBlogs] = useState<any[]>([]);
+  const [stats, setStats] = useState({ followers: 124, likes: 175, posts: 0 });
+
+  const loadOverviewData = () => {
+    const savedName = localStorage.getItem('mentor_name') || 'Oladimeji Isaac';
+    setMentorName(savedName);
+
+    const customBlogs = JSON.parse(localStorage.getItem('mentor_custom_blogs') || '[]');
+    const isFollowing = localStorage.getItem(`following_${savedName}`) === 'true';
+
+    setMyBlogs(customBlogs);
+    setStats({
+      followers: isFollowing ? 125 : 124,
+      likes: 175 + customBlogs.reduce((acc: number, curr: any) => acc + (curr.likes || 0), 0),
+      posts: customBlogs.length + 3 // 3 base default posts
+    });
+  };
 
   useEffect(() => {
     setMounted(true);
-    setProfilePic(localStorage.getItem('mentor_pic'));
-    setFormData({
-      name: localStorage.getItem('mentor_name') || '',
-      email: localStorage.getItem('mentor_email') || '',
-      about: localStorage.getItem('mentor_about') || ''
-    });
+    loadOverviewData();
+    window.addEventListener('profileUpdated', loadOverviewData);
+    window.addEventListener('storage', loadOverviewData);
+
+    return () => {
+      window.removeEventListener('profileUpdated', loadOverviewData);
+      window.removeEventListener('storage', loadOverviewData);
+    };
   }, []);
 
-  const handleSave = () => {
-    setIsLoading(true);
-    setTimeout(() => {
-      localStorage.setItem('mentor_name', formData.name);
-      localStorage.setItem('mentor_email', formData.email);
-      localStorage.setItem('mentor_about', formData.about);
-      
-      setIsLoading(false);
-      setIsEditing(false);
-      toast.success('Profile updated successfully!');
-      window.dispatchEvent(new Event('profileUpdated'));
-    }, 1000);
-  };
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64 = reader.result as string;
-        setProfilePic(base64);
-        localStorage.setItem('mentor_pic', base64);
-        toast.success('Profile picture updated!');
-        window.dispatchEvent(new Event('profileUpdated'));
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const customStyles = {
-    control: (base: any) => ({
-      ...base,
-      backgroundColor: '#2a2a2a',
-      borderRadius: '0.75rem',
-      padding: '0.25rem 0.5rem',
-      borderColor: '#444',
-      borderWidth: '1px',
-      color: '#fff',
-      boxShadow: 'none',
-    }),
-    menu: (base: any) => ({ ...base, backgroundColor: '#2a2a2a' }),
-    option: (base: any, state: any) => ({
-      ...base,
-      backgroundColor: state.isFocused ? '#3B3026' : '#2a2a2a',
-      color: '#fff',
-    }),
-    singleValue: (base: any) => ({ ...base, color: '#fff' })
-  };
+  if (!mounted) return null;
 
   return (
     <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-500 max-w-7xl mx-auto">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-        <h1 className="text-2xl sm:text-4xl font-bold italic-serif">Mentor Profile</h1>
-        <button 
-          onClick={isEditing ? handleSave : () => setIsEditing(true)}
-          disabled={isLoading}
-          className="w-full sm:w-auto bg-[#3B3026] dark:bg-white text-white dark:text-[#3B3026] px-6 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:opacity-90 transition"
+      
+      {/* Header Banner */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 sm:p-8 rounded-3xl bg-white dark:bg-[#1e1e1e] border border-gray-200 dark:border-[#333] shadow-sm">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2 text-xs font-semibold text-amber-500">
+            <Sparkles size={14} /> Verified Campus Mentor
+          </div>
+          <h1 className="text-2xl sm:text-4xl font-bold italic-serif">Welcome Back, {mentorName}!</h1>
+          <p className="text-xs sm:text-sm opacity-60">Here is a summary of your active student reach and recent publications.</p>
+        </div>
+        <Link 
+          href="/mentors/dashboard/blog" 
+          className="self-start sm:self-auto px-5 py-3 rounded-xl bg-[#3B3026] dark:bg-white text-white dark:text-[#3B3026] font-bold text-xs sm:text-sm flex items-center gap-2 hover:opacity-90 transition shrink-0"
         >
-          {isLoading ? <Loader2 className="animate-spin" size={18} /> : isEditing ? <Save size={18} /> : <Edit3 size={18} />}
-          {isLoading ? 'Loading...' : isEditing ? 'Save Changes' : 'Edit Profile'}
-        </button>
+          <Plus size={16} /> Create New Blog
+        </Link>
       </div>
 
+      {/* Quick Metrics */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+        <div className="p-6 rounded-3xl bg-white dark:bg-[#1e1e1e] border border-gray-200 dark:border-[#333] space-y-2">
+          <div className="flex justify-between items-center">
+            <Users className="opacity-50" size={20} />
+            <span className="text-xs font-bold text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded-full">+4.2%</span>
+          </div>
+          <p className="text-xs sm:text-sm opacity-60">Active Mentees</p>
+          <p className="text-2xl sm:text-3xl font-bold">{stats.followers}</p>
+        </div>
+
+        <div className="p-6 rounded-3xl bg-white dark:bg-[#1e1e1e] border border-gray-200 dark:border-[#333] space-y-2">
+          <div className="flex justify-between items-center">
+            <Heart className="opacity-50" size={20} />
+            <span className="text-xs font-bold text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded-full">+18%</span>
+          </div>
+          <p className="text-xs sm:text-sm opacity-60">Total Post Likes</p>
+          <p className="text-2xl sm:text-3xl font-bold">{stats.likes}</p>
+        </div>
+
+        <div className="p-6 rounded-3xl bg-white dark:bg-[#1e1e1e] border border-gray-200 dark:border-[#333] space-y-2">
+          <div className="flex justify-between items-center">
+            <FileText className="opacity-50" size={20} />
+            <span className="text-xs font-bold text-blue-500 bg-blue-500/10 px-2 py-1 rounded-full">Published</span>
+          </div>
+          <p className="text-xs sm:text-sm opacity-60">Articles Authored</p>
+          <p className="text-2xl sm:text-3xl font-bold">{stats.posts}</p>
+        </div>
+      </div>
+
+      {/* Main Grid: Publications & Quick Navigation */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 p-4 sm:p-8 rounded-3xl bg-white dark:bg-[#1e1e1e] border border-gray-200 dark:border-[#333] space-y-6">
-          <div className="flex items-center gap-4 sm:gap-6">
-            <div 
-              onClick={() => isEditing && fileInputRef.current?.click()}
-              className={`w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gray-200 dark:bg-[#2a2a2a] flex items-center justify-center border-4 border-gray-100 dark:border-[#333] relative overflow-hidden shrink-0 ${isEditing ? 'cursor-pointer hover:opacity-80' : 'cursor-default'}`}
-            >
-              {profilePic ? (
-                <img src={profilePic} alt="Profile" className="w-full h-full object-cover" />
-              ) : (
-                <Camera className="opacity-50" />
-              )}
-            </div>
-            <input type="file" ref={fileInputRef} onChange={handleImageChange} className="hidden" accept="image/*" />
-            <h2 className="text-lg sm:text-2xl font-bold">Update Account Details</h2>
+        
+        {/* Recent Blogs */}
+        <div className="lg:col-span-2 p-6 sm:p-8 rounded-3xl bg-white dark:bg-[#1e1e1e] border border-gray-200 dark:border-[#333] space-y-6">
+          <div className="flex justify-between items-center">
+            <h2 className="text-lg sm:text-xl font-bold italic-serif">Your Published Insights</h2>
+            <Link href="/blog" className="text-xs font-bold flex items-center gap-1 opacity-70 hover:opacity-100">
+              Public Feed <ArrowUpRight size={14} />
+            </Link>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <input disabled={!isEditing} value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} placeholder="Full Name" className="p-3.5 sm:p-4 text-sm sm:text-base rounded-xl bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-[#444] outline-none disabled:opacity-50" />
-            <input disabled={!isEditing} value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} placeholder="Email Address" className="p-3.5 sm:p-4 text-sm sm:text-base rounded-xl bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-[#444] outline-none disabled:opacity-50" />
-            
-            <div className="md:col-span-2">
-              {mounted ? (
-                <Select options={yearOptions} styles={customStyles} placeholder="Select Mentorship Category" isDisabled={!isEditing} />
-              ) : (
-                <div className="p-4 rounded-xl bg-[#2a2a2a] border border-[#444] text-gray-500 text-sm">Loading...</div>
-              )}
+          {myBlogs.length === 0 ? (
+            <div className="p-8 text-center rounded-2xl bg-gray-50 dark:bg-[#2a2a2a] space-y-3">
+              <p className="text-sm font-semibold opacity-70">You haven't authored any custom blog posts yet.</p>
+              <Link 
+                href="/mentors/dashboard/blog" 
+                className="inline-block px-4 py-2 text-xs font-bold bg-[#3B3026] dark:bg-white text-white dark:text-[#3B3026] rounded-xl"
+              >
+                Publish Your First Post
+              </Link>
             </div>
-            
-            <textarea disabled={!isEditing} value={formData.about} onChange={(e) => setFormData({...formData, about: e.target.value})} placeholder="About you..." className="md:col-span-2 p-3.5 sm:p-4 text-sm sm:text-base rounded-xl bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-[#444] h-32 outline-none disabled:opacity-50" />
+          ) : (
+            <div className="space-y-3">
+              {myBlogs.map((blog) => (
+                <div key={blog.id} className="p-4 rounded-2xl bg-gray-50 dark:bg-[#2a2a2a] flex items-center justify-between gap-4">
+                  <div className="space-y-1 min-w-0">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#3B3026]/10 dark:bg-white/10">
+                      {blog.tag}
+                    </span>
+                    <p className="text-sm font-bold truncate">{blog.title}</p>
+                    <p className="text-xs opacity-50 line-clamp-1">{blog.body}</p>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <span className="text-xs font-bold text-red-500">♥ {blog.likes || 0}</span>
+                    <p className="text-[10px] opacity-40">{blog.date}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Quick Links Card */}
+        <div className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-[#1e1e1e] border border-gray-200 dark:border-[#333] flex flex-col justify-between space-y-6">
+          <div className="space-y-4">
+            <h2 className="text-lg sm:text-xl font-bold italic-serif">Quick Workspace</h2>
+            <div className="space-y-2">
+              <Link href="/mentors/dashboard/profile" className="block p-3 rounded-xl bg-gray-50 dark:bg-[#2a2a2a] text-xs font-semibold hover:opacity-80 transition">
+                ✏️ Edit Profile Info & Social Links
+              </Link>
+              <Link href="/mentors/dashboard/analytics" className="block p-3 rounded-xl bg-gray-50 dark:bg-[#2a2a2a] text-xs font-semibold hover:opacity-80 transition">
+                📊 Detailed Mentee Analytics
+              </Link>
+              <Link href="/ai" className="block p-3 rounded-xl bg-gray-50 dark:bg-[#2a2a2a] text-xs font-semibold hover:opacity-80 transition">
+                🤖 Open Studie AI Assistant
+              </Link>
+            </div>
           </div>
         </div>
 
-        <div className="p-4 sm:p-8 rounded-3xl bg-white dark:bg-[#1e1e1e] border border-gray-200 dark:border-[#333] space-y-4 sm:space-y-6">
-          <h3 className="font-bold text-base sm:text-lg italic-serif italic">Social Presence</h3>
-          <input disabled={!isEditing} placeholder="LinkedIn URL" className="w-full p-3.5 sm:p-4 text-sm sm:text-base rounded-xl bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-[#444] outline-none disabled:opacity-50" />
-          <input disabled={!isEditing} placeholder="Twitter/X Handle" className="w-full p-3.5 sm:p-4 text-sm sm:text-base rounded-xl bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-[#444] outline-none disabled:opacity-50" />
-          <input disabled={!isEditing} placeholder="Portfolio/Website" className="w-full p-3.5 sm:p-4 text-sm sm:text-base rounded-xl bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-[#444] outline-none disabled:opacity-50" />
-        </div>
       </div>
+
     </div>
   );
 }
